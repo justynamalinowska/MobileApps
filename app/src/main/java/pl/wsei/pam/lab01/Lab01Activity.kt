@@ -10,7 +10,7 @@ import android.widget.Toast
 import android.widget.Toolbar.LayoutParams
 import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity1 : AppCompatActivity() {
+class Lab01Activity : AppCompatActivity() {
     lateinit var mLayout: LinearLayout
     lateinit var mTitle: TextView
     lateinit var mProgress: ProgressBar
@@ -55,7 +55,7 @@ class MainActivity1 : AppCompatActivity() {
                         mBoxes[i - 1].isChecked = testResult
                         if (testResult) mProgress.progress += 17;
                         Toast.makeText(
-                            this@MainActivity1,
+                            this@Lab01Activity,
                             "Test ${i} ${if (testResult) "zaliczony" else "niezaliczony"}",
                             Toast.LENGTH_SHORT
                         ).show()

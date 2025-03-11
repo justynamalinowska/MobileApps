@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "pl.wsei.pam.lab01"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "pl.wsei.pam.lab01"
@@ -33,6 +33,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    buildToolsVersion = "35.0.1"
 }
 
 dependencies {
