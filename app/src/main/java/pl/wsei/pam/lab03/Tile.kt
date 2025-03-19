@@ -2,10 +2,6 @@ package pl.wsei.pam.lab03
 
 import android.widget.ImageButton
 
-enum class GameStates {
-    Matching, Match, NoMatch, Finished
-}
-
 data class Tile(val button: ImageButton, val tileResource: Int, val deckResource: Int) {
     init {
         button.setImageResource(deckResource)
