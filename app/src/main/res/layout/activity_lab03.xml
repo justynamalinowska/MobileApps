@@ -7,4 +7,19 @@
     android:layout_height="match_parent"
     tools:context="pl.wsei.pam.lab03.Lab03Activity">
 
+    <androidx.gridlayout.widget.GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </androidx.gridlayout.widget.GridLayout>
+
+    <GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/gridLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:rowCount="1"
+        android:columnCount="1">
+
+    </GridLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
