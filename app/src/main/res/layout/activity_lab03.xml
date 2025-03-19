@@ -8,18 +8,10 @@
     tools:context="pl.wsei.pam.lab03.Lab03Activity">
 
     <androidx.gridlayout.widget.GridLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-    </androidx.gridlayout.widget.GridLayout>
-
-    <GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/gridLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:rowCount="1"
-        android:columnCount="1">
-
-    </GridLayout>
+        app:columnCount="3"
+        app:rowCount="3" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

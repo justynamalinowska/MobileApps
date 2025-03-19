@@ -52,8 +52,8 @@ class MemoryBoardView(
                 button.tag = "$row-$col"
 
                 val layoutParams = GridLayout.LayoutParams().apply {
-                    width = 0
-                    height = 0
+                    width = GridLayout.LayoutParams.WRAP_CONTENT
+                    height = GridLayout.LayoutParams.WRAP_CONTENT
                     setGravity(Gravity.CENTER)
                     columnSpec = GridLayout.spec(col, 1, 1f)
                     rowSpec = GridLayout.spec(row, 1, 1f)

@@ -5,8 +5,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.gridlayout.widget.GridLayout
 import pl.wsei.pam.lab01.R
+import kotlin.concurrent.schedule
 
 class Lab03Activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,18 +20,47 @@ class Lab03Activity : AppCompatActivity() {
             insets
         }
 
-        // Tutaj MUSI być GridLayout w twoim activity_lab03.xml
-        val mBoard: GridLayout = findViewById(R.id.gridLayout)
+        val mBoard: androidx.gridlayout.widget.GridLayout = findViewById(R.id.gridLayout)
 
-        // Pobierasz dane o rozmiarach planszy
         val cols = intent.getIntExtra("columns", 3)
         val rows = intent.getIntExtra("rows", 3)
 
-        // Ustaw kolumny i wiersze dla GridLayout
         mBoard.columnCount = cols
         mBoard.rowCount = rows
 
-        // Tworzysz model planszy
         val mBoardModel = MemoryBoardView(mBoard, cols, rows)
+
+        // OBSŁUGA ZDARZEŃ GRY!
+        mBoardModel.setOnGameChangeListener { event ->
+            when (event.state) {
+                GameStates.Matching -> {
+                    event.tiles.forEach { it.revealed = true }
+                }
+
+                GameStates.Match -> {
+                    event.tiles.forEach { it.revealed = true }
+                }
+
+                GameStates.NoMatch -> {
+                    event.tiles.forEach { it.revealed = true }
+
+                    java.util.Timer().schedule(2000) {
+                        runOnUiThread {
+                            event.tiles.forEach { it.revealed = false }
+                        }
+                    }
+                }
+
+                GameStates.Finished -> {
+                    runOnUiThread {
+                        event.tiles.forEach { it.revealed = true }
+                        android.widget.Toast.makeText(this, "Gra zakończona!", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
     }
+
 }
+
+
