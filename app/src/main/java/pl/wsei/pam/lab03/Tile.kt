@@ -2,22 +2,27 @@ package pl.wsei.pam.lab03
 
 import android.widget.ImageButton
 
-data class Tile(val button: ImageButton, val tileResource: Int, val deckResource: Int) {
-    init {
-        button.setImageResource(deckResource)
-    }
-
+data class Tile(
+    val button: ImageButton,
+    var tileResource: Int,
+    val deckResource: Int
+) {
     private var _revealed: Boolean = false
+
     var revealed: Boolean
         get() = _revealed
         set(value) {
             _revealed = value
-            if (_revealed) {
-                button.setImageResource(tileResource)
-            } else {
-                button.setImageResource(deckResource)
-            }
+            updateImage()
         }
+
+    init {
+        updateImage()
+    }
+
+    fun updateImage() {
+        button.setImageResource(if (revealed) tileResource else deckResource)
+    }
 
     fun removeOnClickListener() {
         button.setOnClickListener(null)

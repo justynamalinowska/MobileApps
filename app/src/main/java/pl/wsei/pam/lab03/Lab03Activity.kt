@@ -9,6 +9,8 @@ import pl.wsei.pam.lab01.R
 import kotlin.concurrent.schedule
 
 class Lab03Activity : AppCompatActivity() {
+    private lateinit var mBoardModel: MemoryBoardView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -30,7 +32,6 @@ class Lab03Activity : AppCompatActivity() {
 
         val mBoardModel = MemoryBoardView(mBoard, cols, rows)
 
-        // OBSŁUGA ZDARZEŃ GRY!
         mBoardModel.setOnGameChangeListener { event ->
             when (event.state) {
                 GameStates.Matching -> {
@@ -44,7 +45,7 @@ class Lab03Activity : AppCompatActivity() {
                 GameStates.NoMatch -> {
                     event.tiles.forEach { it.revealed = true }
 
-                    java.util.Timer().schedule(2000) {
+                    java.util.Timer().schedule(900) {
                         runOnUiThread {
                             event.tiles.forEach { it.revealed = false }
                         }
@@ -54,13 +55,17 @@ class Lab03Activity : AppCompatActivity() {
                 GameStates.Finished -> {
                     runOnUiThread {
                         event.tiles.forEach { it.revealed = true }
-                        android.widget.Toast.makeText(this, "Gra zakończona!", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(this, "You won!", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
     }
-
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        val state = mBoardModel.getState()
+        outState.putIntArray("game_state", state)
+    }
 }
 
 
