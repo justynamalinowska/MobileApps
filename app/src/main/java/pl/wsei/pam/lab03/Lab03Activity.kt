@@ -1,8 +1,14 @@
 package pl.wsei.pam.lab03
 
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import pl.wsei.pam.lab01.R
@@ -10,6 +16,20 @@ import kotlin.concurrent.schedule
 
 class Lab03Activity : AppCompatActivity() {
     private lateinit var mBoardModel: MemoryBoardView
+    lateinit var completionPlayer: MediaPlayer
+    lateinit var negativePlayer: MediaPlayer
+
+    override fun onResume() {
+        super.onResume()
+        completionPlayer = MediaPlayer.create(applicationContext, R.raw.completion)
+        negativePlayer = MediaPlayer.create(applicationContext, R.raw.negative_guitar)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        completionPlayer.release()
+        negativePlayer.release()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +50,7 @@ class Lab03Activity : AppCompatActivity() {
         mBoard.columnCount = cols
         mBoard.rowCount = rows
 
-        val mBoardModel = MemoryBoardView(mBoard, cols, rows)
+        mBoardModel = MemoryBoardView(mBoard, cols, rows)
 
         mBoardModel.setOnGameChangeListener { event ->
             when (event.state) {
@@ -40,10 +60,17 @@ class Lab03Activity : AppCompatActivity() {
 
                 GameStates.Match -> {
                     event.tiles.forEach { it.revealed = true }
+                    if (isSound) {
+                        completionPlayer.start()
+                    }
+
                 }
 
                 GameStates.NoMatch -> {
                     event.tiles.forEach { it.revealed = true }
+                    if (isSound) {
+                        negativePlayer.start()
+                    }
 
                     java.util.Timer().schedule(900) {
                         runOnUiThread {
@@ -66,6 +93,31 @@ class Lab03Activity : AppCompatActivity() {
         val state = mBoardModel.getState()
         outState.putIntArray("game_state", state)
     }
+
+    var isSound = true;
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.board_activity_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.board_activity_sound) {
+            if (isSound) {
+                item.icon = ContextCompat.getDrawable(this, R.drawable.baseline_volume_off_24)
+                Toast.makeText(this, "Sound turned off", Toast.LENGTH_SHORT).show()
+                isSound = false
+            } else {
+                item.icon = ContextCompat.getDrawable(this, R.drawable.baseline_volume_up_24)
+                Toast.makeText(this, "Sound turned on", Toast.LENGTH_SHORT).show()
+                isSound = true
+            }
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
 }
 
 
