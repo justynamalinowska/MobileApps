@@ -100,21 +100,21 @@ class Lab03Activity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when(item.itemId) {
+        //return super.onOptionsItemSelected(item)
+        when (item.itemId) {
             R.id.board_activity_sound -> {
-                if (item.icon?.constantState == getDrawable(R.drawable.baseline_volume_up_24)?.constantState) {
-                    Toast.makeText(this, "Sound off", Toast.LENGTH_SHORT).show()
-                    item.setIcon(R.drawable.baseline_volume_off_24)
-                    isSound = false
-                } else {
-                    Toast.makeText(this, "Sound on", Toast.LENGTH_SHORT).show()
+                isSound = !isSound
+
+                if (isSound) {
                     item.setIcon(R.drawable.baseline_volume_up_24)
-                    isSound = true
+                    Toast.makeText(this, "Sound turned on", Toast.LENGTH_SHORT).show()
+                } else {
+                    item.setIcon(R.drawable.baseline_volume_off_24)
+                    Toast.makeText(this, "Sound turned off", Toast.LENGTH_SHORT).show()
                 }
-                true
             }
-            else -> super.onOptionsItemSelected(item)
         }
+        return true
     }
 }
 
