@@ -3,12 +3,10 @@ package pl.wsei.pam.lab03
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import pl.wsei.pam.lab01.R
@@ -18,6 +16,8 @@ class Lab03Activity : AppCompatActivity() {
     private lateinit var mBoardModel: MemoryBoardView
     lateinit var completionPlayer: MediaPlayer
     lateinit var negativePlayer: MediaPlayer
+    var isSound = true
+
 
     override fun onResume() {
         super.onResume()
@@ -94,30 +94,28 @@ class Lab03Activity : AppCompatActivity() {
         outState.putIntArray("game_state", state)
     }
 
-    var isSound = true;
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val inflater: MenuInflater = menuInflater
-        inflater.inflate(R.menu.board_activity_menu, menu)
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.board_activity_menu, menu)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.board_activity_sound) {
-            if (isSound) {
-                item.icon = ContextCompat.getDrawable(this, R.drawable.baseline_volume_off_24)
-                Toast.makeText(this, "Sound turned off", Toast.LENGTH_SHORT).show()
-                isSound = false
-            } else {
-                item.icon = ContextCompat.getDrawable(this, R.drawable.baseline_volume_up_24)
-                Toast.makeText(this, "Sound turned on", Toast.LENGTH_SHORT).show()
-                isSound = true
+        return when(item.itemId) {
+            R.id.board_activity_sound -> {
+                if (item.icon?.constantState == getDrawable(R.drawable.baseline_volume_up_24)?.constantState) {
+                    Toast.makeText(this, "Sound off", Toast.LENGTH_SHORT).show()
+                    item.setIcon(R.drawable.baseline_volume_off_24)
+                    isSound = false
+                } else {
+                    Toast.makeText(this, "Sound on", Toast.LENGTH_SHORT).show()
+                    item.setIcon(R.drawable.baseline_volume_up_24)
+                    isSound = true
+                }
+                true
             }
-            return true
+            else -> super.onOptionsItemSelected(item)
         }
-        return super.onOptionsItemSelected(item)
     }
-
 }
 
 

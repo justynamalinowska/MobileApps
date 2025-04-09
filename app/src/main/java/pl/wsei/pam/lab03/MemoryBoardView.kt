@@ -87,7 +87,7 @@ class MemoryBoardView(
                 val layoutParams = GridLayout.LayoutParams().apply {
                     width = tileSize
                     height = tileSize
-                    setMargins(4, 4, 4, 4) // można też obliczyć dynamicznie
+                    setMargins(4, 4, 4, 4)
                     setGravity(Gravity.CENTER)
                     columnSpec = GridLayout.spec(col, 1, 1f)
                     rowSpec = GridLayout.spec(row, 1, 1f)

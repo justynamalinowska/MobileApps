@@ -5,5 +5,5 @@
         android:id="@+id/board_activity_sound"
         android:icon="@drawable/baseline_volume_up_24"
         app:showAsAction="always"
-        android:title="@string/board_activity_menu_sound" />
+        android:title="Sound" />
 </menu>
