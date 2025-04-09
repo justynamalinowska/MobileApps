@@ -7,9 +7,15 @@ import android.view.View
 import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.ImageView
-import androidx.camera.viewfinder.core.ScaleType
 import pl.wsei.pam.lab01.R
 import java.util.Stack
+import android.animation.Animator
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.AnimatorListenerAdapter
+import android.view.animation.DecelerateInterpolator
+import java.util.Random
+
 
 class MemoryBoardView(
     private val gridLayout: androidx.gridlayout.widget.GridLayout,
@@ -20,6 +26,7 @@ class MemoryBoardView(
     private var onGameChangeStateListener: (MemoryGameEvent) -> Unit = { (e) -> }
     private val matchedPair: Stack<Tile> = Stack()
     private val logic: MemoryGameLogic = MemoryGameLogic(cols * rows / 2)
+    val activity = gridLayout.context as Lab03Activity
 
     private val tiles: MutableMap<String, Tile> = mutableMapOf()
     private val icons: List<Int> = listOf(
@@ -75,12 +82,12 @@ class MemoryBoardView(
                 val tileWidth = availableWidth / cols
                 val tileHeight = availableHeight / rows
 
-                val tileSize = minOf(tileWidth, tileHeight) // aby kafelki były kwadratowe i mieściły się
+                val tileSize = minOf(tileWidth, tileHeight)
 
                 val layoutParams = GridLayout.LayoutParams().apply {
                     width = tileSize
                     height = tileSize
-                    setMargins(4, 4, 4, 4) // można też obliczyć dynamicznie
+                    setMargins(4, 4, 4, 4)
                     setGravity(Gravity.CENTER)
                     columnSpec = GridLayout.spec(col, 1, 1f)
                     rowSpec = GridLayout.spec(row, 1, 1f)
@@ -105,11 +112,87 @@ class MemoryBoardView(
         val matchResult = logic.process {
             tile?.tileResource ?: -1
         }
+
         onGameChangeStateListener(MemoryGameEvent(matchedPair.toList(), matchResult))
-        if (matchResult != GameStates.Matching) {
+
+        if (matchResult == GameStates.Match) {
+            if (activity.isSound) {
+                activity.completionPlayer.start()
+            }
+
+
+            matchedPair.forEach { tile ->
+                animatePairedButton(tile.button, Runnable {
+                    tile.button.isEnabled = false
+                })
+            }
+            matchedPair.clear()
+        } else if (matchResult == GameStates.NoMatch) {
+            if (activity.isSound) {
+                activity.negativePlayer.start()
+            }
+
+
+            matchedPair.forEach { tile ->
+                animateWrongPair(tile.button, Runnable {
+                    tile.revealed = false
+                    tile.updateImage()
+                    tile.button.rotation = 0f
+                })
+            }
             matchedPair.clear()
         }
     }
+
+    private fun animatePairedButton(button: ImageButton, action: Runnable) {
+        val set = AnimatorSet()
+        val random = Random()
+
+        button.pivotX = random.nextFloat() * 200f
+        button.pivotY = random.nextFloat() * 200f
+
+        val rotation = ObjectAnimator.ofFloat(button, "rotation", 1080f)
+        val scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 4f)
+        val scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 4f)
+        val fade = ObjectAnimator.ofFloat(button, "alpha", 1f, 0f)
+
+        set.startDelay = 500
+        set.duration = 2000
+        set.interpolator = DecelerateInterpolator()
+        set.playTogether(rotation, scaleX, scaleY, fade)
+
+        set.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                button.scaleX = 1f
+                button.scaleY = 1f
+                button.alpha = 0f
+                action.run()
+            }
+        })
+
+        set.start()
+    }
+
+    private fun animateWrongPair(button: ImageButton, action: Runnable) {
+        val set = AnimatorSet()
+
+        val rotateLeft = ObjectAnimator.ofFloat(button, "rotation", 0f, -15f)
+        val rotateRight = ObjectAnimator.ofFloat(button, "rotation", -15f, 15f)
+        val rotateCenter = ObjectAnimator.ofFloat(button, "rotation", 15f, 0f)
+
+        set.playSequentially(rotateLeft, rotateRight, rotateCenter)
+        set.duration = 500
+        set.interpolator = DecelerateInterpolator()
+
+        set.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                action.run()
+            }
+        })
+
+        set.start()
+    }
+
 
     fun setOnGameChangeListener(listener: (event: MemoryGameEvent) -> Unit) {
         onGameChangeStateListener = listener
