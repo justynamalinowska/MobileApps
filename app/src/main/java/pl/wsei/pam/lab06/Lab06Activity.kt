@@ -4,13 +4,25 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -26,12 +38,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import pl.wsei.pam.lab06.ui.theme.Lab06Theme
+import java.time.LocalDate
 
 class Lab06Activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +62,27 @@ class Lab06Activity : AppCompatActivity() {
         }
     }
 
+    enum class Priority {
+        High, Medium, Low
+    }
+
+    data class TodoTask(
+        val title: String,
+        val deadline: LocalDate,
+        val isDone: Boolean,
+        val priority: Priority
+    )
+
+    fun todoTasks(): List<TodoTask> {
+        return listOf(
+            TodoTask("Programming", LocalDate.of(2024, 4, 18), false, Priority.Low),
+            TodoTask("Teaching", LocalDate.of(2024, 5, 12), false, Priority.High),
+            TodoTask("Learning", LocalDate.of(2024, 6, 28), true, Priority.Low),
+            TodoTask("Cooking", LocalDate.of(2024, 8, 18), false, Priority.Medium),
+        )
+    }
+
+
     @Composable
     fun MainScreen() {
         val navController = rememberNavController()
@@ -55,6 +90,31 @@ class Lab06Activity : AppCompatActivity() {
             composable("list") { ListScreen(navController = navController) }
             composable("form") { FormScreen(navController = navController) }
             composable("settings") { SettingsScreen(navController = navController) }
+        }
+    }
+
+    @Composable
+    fun ListItem(item: TodoTask, modifier: Modifier = Modifier) {
+        ElevatedCard(
+            modifier = modifier
+                .fillMaxWidth()
+                .heightIn(120.dp)
+                .padding(8.dp),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 4.dp
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = item.title, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row {
+                    Text(text = "Deadline: ${item.deadline}")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Priority: ${item.priority}")
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = if (item.isDone) "Done" else "Not done")
+            }
         }
     }
 
@@ -86,7 +146,11 @@ class Lab06Activity : AppCompatActivity() {
                 )
             },
             content = {
-                Text("Lista")
+                LazyColumn(modifier = Modifier.padding(it)) {
+                    items(items = todoTasks()) { item ->
+                        ListItem(item = item)
+                    }
+                }
             }
         )
     }
