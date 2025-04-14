@@ -4,48 +4,34 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+
 import pl.wsei.pam.lab06.ui.theme.Lab06Theme
+
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 
 class Lab06Activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,14 +68,15 @@ class Lab06Activity : AppCompatActivity() {
         )
     }
 
-
     @Composable
     fun MainScreen() {
         val navController = rememberNavController()
+        val taskList = remember { mutableStateListOf<TodoTask>() }
+
         NavHost(navController = navController, startDestination = "list") {
-            composable("list") { ListScreen(navController = navController) }
-            composable("form") { FormScreen(navController = navController) }
-            composable("settings") { SettingsScreen(navController = navController) }
+            composable("list") { ListScreen(navController, taskList) }
+            composable("form") { FormScreen(navController, taskList) }
+            composable("settings") { SettingsScreen(navController) }
         }
     }
 
@@ -120,14 +107,14 @@ class Lab06Activity : AppCompatActivity() {
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @Composable
-    fun ListScreen(navController: NavController) {
+    fun ListScreen(navController: NavController, taskList: List<TodoTask>) {
         Scaffold(
             topBar = {
                 AppTopBar(
                     navController = navController,
                     title = "Lista",
                     showBackIcon = false,
-                    route = "form" // bo do formularza wracamy
+                    route = "form"
                 )
             },
             floatingActionButton = {
@@ -156,21 +143,131 @@ class Lab06Activity : AppCompatActivity() {
     }
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun FormScreen(navController: NavController) {
+    fun FormScreen(navController: NavController, taskList: MutableList<TodoTask>) {
+        var title by remember { mutableStateOf("") }
+        var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+        var showDatePicker by remember { mutableStateOf(false) }
+        var selectedPriority by remember { mutableStateOf(Priority.Low) }
+        var isDone by remember { mutableStateOf(false) }
+
+        val datePickerState = rememberDatePickerState()
+
+        if (showDatePicker) {
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        datePickerState.selectedDateMillis?.let {
+                            selectedDate = Instant.ofEpochMilli(it)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                        }
+                        showDatePicker = false
+                    }) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text("Anuluj")
+                    }
+                }
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
+
         Scaffold(
             topBar = {
                 AppTopBar(
                     navController = navController,
-                    title = "Form",
+                    title = "Formularz",
                     showBackIcon = true,
-                    route = "list"
+                    route = "list",
+                    onSaveClick = {
+                        if (title.isNotBlank() && selectedDate != null) {
+                            taskList.add(
+                                TodoTask(title, selectedDate!!, isDone, selectedPriority)
+                            )
+                            navController.navigate("list") {
+                                popUpTo("list") { inclusive = true }
+                            }
+                        }
+                    }
                 )
             },
-            content = {
-                Text("Formularz")
+            content = { paddingValues ->
+                Column(
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Tytuł zadania") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(onClick = { showDatePicker = true }) {
+                        Text(text = selectedDate?.toString() ?: "Wybierz datę")
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text("Priorytet:")
+
+                    DropdownMenuBox(
+                        options = Priority.values().toList(),
+                        selected = selectedPriority,
+                        onSelectedChange = { selectedPriority = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Zakończone?")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Switch(checked = isDone, onCheckedChange = { isDone = it })
+                    }
+                }
             }
         )
+    }
+
+    @Composable
+    fun DropdownMenuBox(
+        options: List<Lab06Activity.Priority>,
+        selected: Lab06Activity.Priority,
+        onSelectedChange: (Lab06Activity.Priority) -> Unit
+    ) {
+        var expanded by remember { mutableStateOf(false) }
+
+        Column {
+            OutlinedButton(onClick = { expanded = true }) {
+                Text(text = selected.name)
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { priority ->
+                    DropdownMenuItem(
+                        text = { Text(priority.name) },
+                        onClick = {
+                            onSelectedChange(priority)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
     }
 
     @Composable
@@ -193,7 +290,8 @@ class Lab06Activity : AppCompatActivity() {
         navController: NavController,
         title: String,
         showBackIcon: Boolean,
-        route: String
+        route: String,
+        onSaveClick: (() -> Unit)? = null
     ) {
         TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
@@ -212,28 +310,20 @@ class Lab06Activity : AppCompatActivity() {
                 }
             },
             actions = {
-                if (route !== "form") {
-                    OutlinedButton(
-                        onClick = { navController.navigate("list") }
-                    )
-                    {
-                        Text(
-                            text = "Zapisz",
-                            fontSize = 18.sp
-                        )
-                    }
-                } else {
+                if (route != "form") {
                     IconButton(onClick = {
                         navController.navigate("settings")
                     }) {
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                     }
                     IconButton(onClick = {
-                        navController.navigate("list") {
-                            popUpTo("list") { inclusive = true }
-                        }
+                        navController.navigate("form")
                     }) {
-                        Icon(imageVector = Icons.Default.Home, contentDescription = "Home")
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+                    }
+                } else {
+                    OutlinedButton(onClick = { onSaveClick?.invoke() }) {
+                        Text(text = "Zapisz", fontSize = 18.sp)
                     }
                 }
             }
