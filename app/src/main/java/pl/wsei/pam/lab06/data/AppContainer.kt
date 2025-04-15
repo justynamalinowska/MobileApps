@@ -1,6 +1,7 @@
 package pl.wsei.pam.lab06.data
 
+import pl.wsei.pam.lab06.data.repository.TodoTaskRepository
+
 interface AppContainer {
-    val database: AppDatabase
-    val todoTaskDao: TodoTaskDao
+    val todoTaskRepository: TodoTaskRepository
 }

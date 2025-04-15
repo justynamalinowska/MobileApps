@@ -2,7 +2,6 @@ package pl.wsei.pam.lab06.data
 
 import android.content.Context
 import androidx.room.*
-import pl.wsei.pam.lab06.Priority
 
 @Database(entities = [TodoTaskEntity::class], version = 1)
 @TypeConverters(LocalDateConverter::class)

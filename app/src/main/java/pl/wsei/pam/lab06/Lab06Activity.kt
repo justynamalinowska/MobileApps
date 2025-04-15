@@ -34,6 +34,7 @@ enum class Priority {
 }
 
 data class TodoTask(
+    val id: Int = 0,
     val title: String,
     val deadline: LocalDate,
     val isDone: Boolean,
@@ -41,10 +42,10 @@ data class TodoTask(
 )
 
 val taskList = mutableStateListOf(
-    TodoTask("Programming", LocalDate.of(2024, 4, 18), false, Priority.Low),
-    TodoTask("Teaching", LocalDate.of(2024, 5, 12), false, Priority.High),
-    TodoTask("Learning", LocalDate.of(2024, 6, 28), true, Priority.Low),
-    TodoTask("Cooking", LocalDate.of(2024, 8, 18), false, Priority.Medium)
+    TodoTask(0, "Programming", LocalDate.of(2024, 4, 18), false, Priority.Low),
+    TodoTask(1, "Teaching", LocalDate.of(2024, 5, 12), false, Priority.High),
+    TodoTask(2, "Learning", LocalDate.of(2024, 6, 28), true, Priority.Low),
+    TodoTask(3, "Cooking", LocalDate.of(2024, 8, 18), false, Priority.Medium)
 )
 
 // --- ACTIVITY ---
@@ -139,7 +140,16 @@ fun FormScreen(navController: NavController) {
                 showBackIcon = true,
                 onSaveClick = {
                     if (title.isNotBlank() && selectedDate != null) {
-                        taskList.add(TodoTask(title, selectedDate!!, isDone, selectedPriority))
+                        val newId = (taskList.maxOfOrNull { it.id } ?: 0) + 1
+                        taskList.add(
+                            TodoTask(
+                                id = newId,
+                                title = title,
+                                deadline = selectedDate!!,
+                                isDone = isDone,
+                                priority = selectedPriority
+                            )
+                        )
                         navController.navigate("list") {
                             popUpTo("list") { inclusive = true }
                         }
