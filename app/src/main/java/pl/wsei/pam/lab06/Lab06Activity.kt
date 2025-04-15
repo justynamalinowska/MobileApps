@@ -16,7 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,11 +24,25 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
+import pl.wsei.pam.lab06.ui.form.FormViewModel
+import pl.wsei.pam.lab06.ui.form.TodoTaskInputBody
 import pl.wsei.pam.lab06.ui.list.ListViewModel
 import pl.wsei.pam.lab06.ui.theme.Lab06Theme
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
+
+class Lab06Activity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            Lab06Theme {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    MainScreen()
+                }
+            }
+        }
+    }
+}
 
 enum class Priority {
     High, Medium, Low
@@ -41,19 +55,6 @@ data class TodoTask(
     val isDone: Boolean,
     val priority: Priority
 )
-
-class Lab06Activity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            Lab06Theme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    MainScreen()
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun MainScreen() {
@@ -77,8 +78,7 @@ fun ListScreen(
             AppTopBar(
                 navController = navController,
                 title = "Lista",
-                showBackIcon = false,
-                onSaveClick = null
+                showBackIcon = false
             )
         },
         floatingActionButton = {
@@ -91,8 +91,8 @@ fun ListScreen(
         },
         content = {
             LazyColumn(modifier = Modifier.padding(it)) {
-                items(listUiState.items, key = { it.id }) { task ->
-                    ListItem(task)
+                items(items = listUiState.items, key = { it.id }) { task ->
+                    ListItem(item = task)
                 }
             }
         }
@@ -101,35 +101,11 @@ fun ListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FormScreen(navController: NavController) {
-    val viewModel: ListViewModel = viewModel(factory = AppViewModelProvider.Factory)
-
-    var title by remember { mutableStateOf("") }
-    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
-    var showDatePicker by remember { mutableStateOf(false) }
-    var selectedPriority by remember { mutableStateOf(Priority.Low) }
-    var isDone by remember { mutableStateOf(false) }
-
-    val datePickerState = rememberDatePickerState()
-
-    if (showDatePicker) {
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let {
-                        selectedDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
-                    }
-                    showDatePicker = false
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Anuluj") }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    }
+fun FormScreen(
+    navController: NavController,
+    viewModel: FormViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -138,110 +114,31 @@ fun FormScreen(navController: NavController) {
                 title = "Formularz",
                 showBackIcon = true,
                 onSaveClick = {
-                    if (title.isNotBlank() && selectedDate != null) {
-                        viewModel.addTask(
-                            TodoTask(
-                                title = title,
-                                deadline = selectedDate!!,
-                                isDone = isDone,
-                                priority = selectedPriority
-                            )
-                        )
+                    coroutineScope.launch {
+                        viewModel.save()
                         navController.navigate("list") {
                             popUpTo("list") { inclusive = true }
                         }
                     }
                 }
             )
-        },
-        content = { padding ->
-            Column(
-                modifier = Modifier
-                    .padding(padding)
-                    .padding(16.dp)
-            ) {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Tytuł zadania") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(onClick = { showDatePicker = true }) {
-                    Text(text = selectedDate?.toString() ?: "Wybierz datę")
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text("Priorytet:")
-
-                DropdownMenuBox(
-                    options = Priority.values().toList(),
-                    selected = selectedPriority,
-                    onSelectedChange = { selectedPriority = it }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Zakończone?")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Switch(checked = isDone, onCheckedChange = { isDone = it })
-                }
-            }
         }
-    )
-}
-
-@Composable
-fun SettingsScreen(navController: NavController) {
-    Text("Ekran ustawień")
-}
-
-@Composable
-fun ListItem(item: TodoTask, modifier: Modifier = Modifier) {
-    ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(120.dp)
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = item.title, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Row {
-                Text("Deadline: ${item.deadline}")
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Priority: ${item.priority}")
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(if (item.isDone) "Done" else "Not done")
-        }
+        TodoTaskInputBody(
+            todoUiState = viewModel.todoTaskUiState,
+            onItemValueChange = viewModel::updateUiState,
+            modifier = Modifier.padding(it)
+        )
     }
 }
 
 @Composable
-fun DropdownMenuBox(options: List<Priority>, selected: Priority, onSelectedChange: (Priority) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column {
-        OutlinedButton(onClick = { expanded = true }) {
-            Text(text = selected.name)
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { priority ->
-                DropdownMenuItem(
-                    text = { Text(priority.name) },
-                    onClick = {
-                        onSelectedChange(priority)
-                        expanded = false
-                    }
-                )
-            }
-        }
+fun SettingsScreen(navController: NavController) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Ekran ustawień", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
     }
 }
 
@@ -283,10 +180,25 @@ fun AppTopBar(
     )
 }
 
-@Preview(showBackground = true)
 @Composable
-fun MainScreenPreview() {
-    Lab06Theme {
-        MainScreen()
+fun ListItem(item: TodoTask, modifier: Modifier = Modifier) {
+    ElevatedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(120.dp)
+            .padding(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = item.title, style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(4.dp))
+            Row {
+                Text("Deadline: ${item.deadline}")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Priority: ${item.priority}")
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(if (item.isDone) "Done" else "Not done")
+        }
     }
 }
