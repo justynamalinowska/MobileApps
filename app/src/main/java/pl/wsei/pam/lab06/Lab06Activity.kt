@@ -19,16 +19,17 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import pl.wsei.pam.lab06.ui.list.ListViewModel
 import pl.wsei.pam.lab06.ui.theme.Lab06Theme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-// --- DATA STRUCTURES ---
 enum class Priority {
     High, Medium, Low
 }
@@ -41,14 +42,6 @@ data class TodoTask(
     val priority: Priority
 )
 
-val taskList = mutableStateListOf(
-    TodoTask(0, "Programming", LocalDate.of(2024, 4, 18), false, Priority.Low),
-    TodoTask(1, "Teaching", LocalDate.of(2024, 5, 12), false, Priority.High),
-    TodoTask(2, "Learning", LocalDate.of(2024, 6, 28), true, Priority.Low),
-    TodoTask(3, "Cooking", LocalDate.of(2024, 8, 18), false, Priority.Medium)
-)
-
-// --- ACTIVITY ---
 class Lab06Activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +55,6 @@ class Lab06Activity : AppCompatActivity() {
     }
 }
 
-// --- SCREENS ---
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
@@ -74,7 +66,12 @@ fun MainScreen() {
 }
 
 @Composable
-fun ListScreen(navController: NavController) {
+fun ListScreen(
+    navController: NavController,
+    viewModel: ListViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
+    val listUiState by viewModel.listUiState.collectAsState()
+
     Scaffold(
         topBar = {
             AppTopBar(
@@ -94,7 +91,7 @@ fun ListScreen(navController: NavController) {
         },
         content = {
             LazyColumn(modifier = Modifier.padding(it)) {
-                items(taskList) { task ->
+                items(listUiState.items, key = { it.id }) { task ->
                     ListItem(task)
                 }
             }
@@ -105,6 +102,8 @@ fun ListScreen(navController: NavController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormScreen(navController: NavController) {
+    val viewModel: ListViewModel = viewModel(factory = AppViewModelProvider.Factory)
+
     var title by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -140,10 +139,8 @@ fun FormScreen(navController: NavController) {
                 showBackIcon = true,
                 onSaveClick = {
                     if (title.isNotBlank() && selectedDate != null) {
-                        val newId = (taskList.maxOfOrNull { it.id } ?: 0) + 1
-                        taskList.add(
+                        viewModel.addTask(
                             TodoTask(
-                                id = newId,
                                 title = title,
                                 deadline = selectedDate!!,
                                 isDone = isDone,
