@@ -1,7 +1,13 @@
 package pl.wsei.pam.lab06
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,25 +30,53 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
+import pl.wsei.pam.lab06.data.AppContainer
 import pl.wsei.pam.lab06.ui.form.FormViewModel
 import pl.wsei.pam.lab06.ui.form.TodoTaskInputBody
 import pl.wsei.pam.lab06.ui.list.ListViewModel
 import pl.wsei.pam.lab06.ui.theme.Lab06Theme
 import java.time.LocalDate
 
+
 class Lab06Activity : AppCompatActivity() {
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        createNotificationChannel()
+        container = (this.application as TodoApplication).container
+
         setContent {
             Lab06Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    MainScreen()
+                    MainScreen(this@Lab06Activity.application as TodoApplication)
                 }
             }
         }
     }
+
+    companion object {
+        lateinit var container: AppContainer
+    }
+
+    private fun createNotificationChannel() {
+        val name = "Lab06 channel"
+        val descriptionText = "Lab06 is channel for notifications for approaching tasks."
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(channelID, name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
 }
+
+const val notificationID = 121
+const val channelID = "Lab06 channel"
 
 enum class Priority {
     High, Medium, Low
@@ -56,13 +90,25 @@ data class TodoTask(
     val priority: Priority
 )
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(context: TodoApplication? = null) {
     val navController = rememberNavController()
+
+    val postNotificationPermission =
+        rememberPermissionState(permission = Manifest.permission.POST_NOTIFICATIONS)
+
+    LaunchedEffect(key1 = true) {
+        if (!postNotificationPermission.status.isGranted) {
+            postNotificationPermission.launchPermissionRequest()
+        }
+    }
+
     NavHost(navController = navController, startDestination = "list") {
-        composable("list") { ListScreen(navController) }
-        composable("form") { FormScreen(navController) }
-        composable("settings") { SettingsScreen(navController) }
+        composable("list") { ListScreen(navController = navController) }
+        composable("form") { FormScreen(navController = navController) }
+        composable("settings") { SettingsScreen(navController = navController) }
     }
 }
 
