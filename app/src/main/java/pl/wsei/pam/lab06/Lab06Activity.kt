@@ -1,9 +1,13 @@
 package pl.wsei.pam.lab06
 
 import android.Manifest
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Context.ALARM_SERVICE
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -25,6 +29,8 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -38,45 +44,70 @@ import pl.wsei.pam.lab06.data.AppContainer
 import pl.wsei.pam.lab06.ui.form.FormViewModel
 import pl.wsei.pam.lab06.ui.form.TodoTaskInputBody
 import pl.wsei.pam.lab06.ui.list.ListViewModel
+import pl.wsei.pam.lab06.ui.receiver.NotificationBroadcastReceiver
 import pl.wsei.pam.lab06.ui.theme.Lab06Theme
 import java.time.LocalDate
 
 
 class Lab06Activity : AppCompatActivity() {
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         createNotificationChannel()
-        container = (this.application as TodoApplication).container
+
+        container = (application as TodoApplication).container
 
         setContent {
             Lab06Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    MainScreen(this@Lab06Activity.application as TodoApplication)
+                    MainScreen(application as TodoApplication)
                 }
             }
         }
     }
 
-    companion object {
-        lateinit var container: AppContainer
-    }
-
     private fun createNotificationChannel() {
         val name = "Lab06 channel"
-        val descriptionText = "Lab06 is channel for notifications for approaching tasks."
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val descriptionText = "Channel for approaching tasks"
+        val importance = NotificationManager.IMPORTANCE_HIGH
         val channel = NotificationChannel(channelID, name, importance).apply {
             description = descriptionText
         }
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
     }
+
+    companion object {
+        lateinit var container: AppContainer
+    }
+
+    private fun scheduleAlarm(time: Long) {
+        val intent = Intent(applicationContext, NotificationBroadcastReceiver::class.java).apply {
+            putExtra(titleExtra, "Deadline")
+            putExtra(messageExtra, "Zbliża się termin zakończenia zadania")
+        }
+
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            applicationContext,
+            notificationID,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val alarmManager = ContextCompat.getSystemService(this, AlarmManager::class.java)
+
+        alarmManager?.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            System.currentTimeMillis() + time,
+            pendingIntent
+        )
+    }
 }
 
 const val notificationID = 121
 const val channelID = "Lab06 channel"
+const val titleExtra = "title"
+const val messageExtra = "message"
 
 enum class Priority {
     High, Medium, Low
@@ -248,3 +279,4 @@ fun ListItem(item: TodoTask, modifier: Modifier = Modifier) {
         }
     }
 }
+
