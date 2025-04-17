@@ -2,6 +2,7 @@ package pl.wsei.pam.lab06.data
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
+import pl.wsei.pam.lab06.Lab06Activity.TodoTask
 
 @Dao
 interface TodoTaskDao {
@@ -20,4 +21,7 @@ interface TodoTaskDao {
 
     @Query("SELECT * FROM tasks WHERE id = :id")
     fun find(id: Int): Flow<TodoTaskEntity?>
+
+    @Query("SELECT * FROM tasks")
+    suspend fun getAllTasks(): List<TodoTask>
 }

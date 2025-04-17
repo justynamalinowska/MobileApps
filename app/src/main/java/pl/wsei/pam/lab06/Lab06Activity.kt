@@ -1,5 +1,8 @@
 package pl.wsei.pam.lab06
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +38,9 @@ import java.time.LocalDate
 class Lab06Activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        createNotificationChannel()
+        container = (this.application as TodoApplication).container
+
         setContent {
             Lab06Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -41,8 +48,20 @@ class Lab06Activity : AppCompatActivity() {
                 }
             }
         }
-    }
 }
+
+    private fun createNotificationChannel() {
+        val name = "Lab06 channel"
+        val descriptionText = "Lab06 is channel for notifications for approaching tasks."
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(channelID, name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
 
 enum class Priority {
     High, Medium, Low
@@ -106,7 +125,7 @@ fun FormScreen(
     viewModel: FormViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val coroutineScope = rememberCoroutineScope()
-
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             AppTopBar(
@@ -115,7 +134,7 @@ fun FormScreen(
                 showBackIcon = true,
                 onSaveClick = {
                     coroutineScope.launch {
-                        viewModel.save()
+                        viewModel.save(context)
                         navController.navigate("list") {
                             popUpTo("list") { inclusive = true }
                         }
@@ -201,4 +220,5 @@ fun ListItem(item: TodoTask, modifier: Modifier = Modifier) {
             Text(if (item.isDone) "Done" else "Not done")
         }
     }
+}
 }

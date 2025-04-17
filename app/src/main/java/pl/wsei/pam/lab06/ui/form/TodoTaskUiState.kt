@@ -1,9 +1,9 @@
 // pl/wsei/pam/lab06/ui/form/TodoTaskUiState.kt
 package pl.wsei.pam.lab06.ui.form
 
-import pl.wsei.pam.lab06.TodoTask
+import pl.wsei.pam.lab06.Lab06Activity.TodoTask
 import pl.wsei.pam.lab06.data.LocalDateConverter
-import pl.wsei.pam.lab06.Priority
+import pl.wsei.pam.lab06.Lab06Activity.Priority
 import java.time.LocalDate
 
 data class TodoTaskUiState(
