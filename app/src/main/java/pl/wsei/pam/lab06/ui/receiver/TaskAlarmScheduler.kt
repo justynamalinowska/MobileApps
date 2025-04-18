@@ -33,7 +33,7 @@ class TaskAlarmScheduler(private val context: Context) {
         }
     }
 
-    private fun scheduleAlarm(time: Long, taskTitle: String) {
+    public fun scheduleAlarm(time: Long, taskTitle: String) {
         val intent = Intent(context, NotificationBroadcastReceiver::class.java).apply {
             putExtra(titleExtra, "Przypomnienie o zadaniu")
             putExtra(messageExtra, "Zadanie '$taskTitle' zbliża się do terminu!")
