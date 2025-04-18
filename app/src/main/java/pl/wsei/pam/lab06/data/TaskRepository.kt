@@ -1,6 +1,6 @@
 package pl.wsei.pam.lab06.data
 
-import pl.wsei.pam.lab06.TodoTask
+import pl.wsei.pam.lab06.Lab06Activity.TodoTask
 
 interface TaskRepository {
     fun getTasks(): List<TodoTask>

@@ -8,7 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import pl.wsei.pam.lab06.Priority
+import pl.wsei.pam.lab06.Lab06Activity.Priority
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

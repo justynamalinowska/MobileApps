@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import pl.wsei.pam.lab06.TodoTask
+import pl.wsei.pam.lab06.Lab06Activity.TodoTask
 import pl.wsei.pam.lab06.data.repository.TodoTaskRepository
 
 data class ListUiState(val items: List<TodoTask> = listOf())

@@ -2,7 +2,7 @@ package pl.wsei.pam.lab06.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import pl.wsei.pam.lab06.TodoTask
+import pl.wsei.pam.lab06.Lab06Activity.TodoTask
 import pl.wsei.pam.lab06.data.TodoTaskDao
 import pl.wsei.pam.lab06.data.TodoTaskEntity
 
@@ -28,5 +28,9 @@ class DatabaseTodoTaskRepository(private val dao: TodoTaskDao) : TodoTaskReposit
 
     override suspend fun updateItem(item: TodoTask) {
         dao.update(TodoTaskEntity.fromModel(item))
+    }
+
+    override suspend fun getAllItems(): List<TodoTask> {
+        return dao.getAllTasks()
     }
 }

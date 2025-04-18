@@ -1,7 +1,7 @@
 package pl.wsei.pam.lab06.data.repository
 
 import kotlinx.coroutines.flow.Flow
-import pl.wsei.pam.lab06.TodoTask
+import pl.wsei.pam.lab06.Lab06Activity.TodoTask
 
 interface TodoTaskRepository {
     fun getAllAsStream(): Flow<List<TodoTask>>
@@ -9,4 +9,5 @@ interface TodoTaskRepository {
     suspend fun insertItem(item: TodoTask)
     suspend fun deleteItem(item: TodoTask)
     suspend fun updateItem(item: TodoTask)
+    suspend fun getAllItems(): List<TodoTask>
 }

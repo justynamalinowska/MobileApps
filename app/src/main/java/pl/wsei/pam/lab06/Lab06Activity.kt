@@ -1,7 +1,12 @@
 package pl.wsei.pam.lab06
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,25 +30,60 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
+import pl.wsei.pam.lab06.data.AppContainer
 import pl.wsei.pam.lab06.ui.form.FormViewModel
 import pl.wsei.pam.lab06.ui.form.TodoTaskInputBody
 import pl.wsei.pam.lab06.ui.list.ListViewModel
+import pl.wsei.pam.lab06.ui.receiver.TaskAlarmScheduler
 import pl.wsei.pam.lab06.ui.theme.Lab06Theme
 import java.time.LocalDate
+import android.Manifest
+
 
 class Lab06Activity : AppCompatActivity() {
+    val time = System.currentTimeMillis() + 5_000
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        createNotificationChannel()
+        container = (this.application as TodoApplication).container
+
+        val scheduler = TaskAlarmScheduler(this)
+        scheduler.scheduleAlarm(System.currentTimeMillis() + 5000, "Testowe zadanie")
+
         setContent {
             Lab06Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    MainScreen()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        MainScreen()
+                    } else {
+                        MainScreenWithoutPermission()
+                    }
                 }
             }
         }
+
     }
-}
+
+    companion object {
+        lateinit var container: AppContainer
+    }
+
+    private fun createNotificationChannel() {
+        val name = "Lab06 channel"
+        val descriptionText = "Lab06 is channel for notifications for approaching tasks."
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(channelID, name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
 
 enum class Priority {
     High, Medium, Low
@@ -56,15 +97,28 @@ data class TodoTask(
     val priority: Priority
 )
 
-@Composable
-fun MainScreen() {
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "list") {
-        composable("list") { ListScreen(navController) }
-        composable("form") { FormScreen(navController) }
-        composable("settings") { SettingsScreen(navController) }
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @OptIn(ExperimentalPermissionsApi::class)
+    @Composable
+    fun MainScreen() {
+        val navController = rememberNavController()
+
+        val postNotificationPermission = rememberPermissionState(permission = Manifest.permission.POST_NOTIFICATIONS)
+
+        // Ta funkcja uruchamia się raz — przy pierwszym załadowaniu ekranu
+        LaunchedEffect(Unit) {
+            if (!postNotificationPermission.status.isGranted) {
+                postNotificationPermission.launchPermissionRequest()
+            }
+        }
+
+        NavHost(navController = navController, startDestination = "list") {
+            composable("list") { ListScreen(navController) }
+            composable("form") { FormScreen(navController) }
+            composable("settings") { SettingsScreen(navController) }
+        }
     }
-}
+
 
 @Composable
 fun ListScreen(
@@ -106,7 +160,7 @@ fun FormScreen(
     viewModel: FormViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val coroutineScope = rememberCoroutineScope()
-
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             AppTopBar(
@@ -115,7 +169,7 @@ fun FormScreen(
                 showBackIcon = true,
                 onSaveClick = {
                     coroutineScope.launch {
-                        viewModel.save()
+                        viewModel.save(context)
                         navController.navigate("list") {
                             popUpTo("list") { inclusive = true }
                         }
@@ -202,3 +256,19 @@ fun ListItem(item: TodoTask, modifier: Modifier = Modifier) {
         }
     }
 }
+}
+
+@Composable
+fun MainScreenWithoutPermission() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Brak uprawnień do wysyłania powiadomień",
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+

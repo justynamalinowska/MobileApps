@@ -2,8 +2,8 @@ package pl.wsei.pam.lab06.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import pl.wsei.pam.lab06.TodoTask
-import pl.wsei.pam.lab06.Priority
+import pl.wsei.pam.lab06.Lab06Activity.TodoTask
+import pl.wsei.pam.lab06.Lab06Activity.Priority
 import java.time.LocalDate
 
 @Entity(tableName = "tasks")

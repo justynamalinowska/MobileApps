@@ -38,4 +38,6 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, Lab06Activity::class.java)
         startActivity(intent)
     }
+
+
 }
